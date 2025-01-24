@@ -1,7 +1,7 @@
 .PHONY: server client
 
 server:
-	protoc --go_out=./server/internal/proto --proto_path=. api.proto
+	protoc --go_out=./server/internal --proto_path=. api.proto
 
 client:
 	protoc \
@@ -9,5 +9,6 @@ client:
 		--ts_proto_out=./client/src/api \
 		--proto_path=. \
 		api.proto
+
 
 all: server client
