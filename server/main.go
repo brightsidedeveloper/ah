@@ -1,29 +1,70 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
-	"server/internal/buf"
+	"net/http"
+	"os"
+	"os/signal"
+	"server/internal/handler"
+	"server/internal/routes"
+	"syscall"
+	"time"
 
-	"google.golang.org/protobuf/proto"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func main() {
-	user := &buf.User{
-		Id:    5,
-		Name:  "John",
-		Email: "",
-	}
-	data, err := proto.Marshal(user)
-	if err != nil {
-		log.Fatal("marshaling error: ", err)
-	}
-	var newUser buf.User
-	if err := proto.Unmarshal(data, &newUser); err != nil {
-		log.Fatal("unmarshaling error: ", err)
+
+	h := handler.NewHandler()
+
+	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	r.Use(middleware.Logger)
+
+	routes.MountRoutes(r, h)
+
+	gracefullyServe(r)
+
+}
+
+func gracefullyServe(r *chi.Mux) {
+	port := "8081"
+
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: r,
 	}
 
-	fmt.Println(map[int32]string{
-		newUser.Id: newUser.Name,
-	})
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Println("Starting server on port " + port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe error: %v", err)
+		}
+	}()
+
+	<-shutdown
+	log.Println("Shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server stopped cleanly")
 }

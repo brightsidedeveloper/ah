@@ -7,22 +7,19 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
-export const protobufPackage = "proto";
+export const protobufPackage = "buf";
 
-/** Define a message */
 export interface User {
   id: number;
   name: string;
-  email: string;
 }
 
-/** Request message */
-export interface UserRequest {
-  id: number;
+export interface Users {
+  users: User[];
 }
 
 function createBaseUser(): User {
-  return { id: 0, name: "", email: "" };
+  return { id: 0, name: "" };
 }
 
 export const User: MessageFns<User> = {
@@ -32,9 +29,6 @@ export const User: MessageFns<User> = {
     }
     if (message.name !== "") {
       writer.uint32(18).string(message.name);
-    }
-    if (message.email !== "") {
-      writer.uint32(26).string(message.email);
     }
     return writer;
   },
@@ -62,14 +56,6 @@ export const User: MessageFns<User> = {
           message.name = reader.string();
           continue;
         }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.email = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -83,7 +69,6 @@ export const User: MessageFns<User> = {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      email: isSet(object.email) ? globalThis.String(object.email) : "",
     };
   },
 
@@ -95,9 +80,6 @@ export const User: MessageFns<User> = {
     if (message.name !== "") {
       obj.name = message.name;
     }
-    if (message.email !== "") {
-      obj.email = message.email;
-    }
     return obj;
   },
 
@@ -108,36 +90,35 @@ export const User: MessageFns<User> = {
     const message = createBaseUser();
     message.id = object.id ?? 0;
     message.name = object.name ?? "";
-    message.email = object.email ?? "";
     return message;
   },
 };
 
-function createBaseUserRequest(): UserRequest {
-  return { id: 0 };
+function createBaseUsers(): Users {
+  return { users: [] };
 }
 
-export const UserRequest: MessageFns<UserRequest> = {
-  encode(message: UserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== 0) {
-      writer.uint32(8).int32(message.id);
+export const Users: MessageFns<Users> = {
+  encode(message: Users, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.users) {
+      User.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): UserRequest {
+  decode(input: BinaryReader | Uint8Array, length?: number): Users {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUserRequest();
+    const message = createBaseUsers();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1: {
-          if (tag !== 8) {
+          if (tag !== 10) {
             break;
           }
 
-          message.id = reader.int32();
+          message.users.push(User.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -149,52 +130,27 @@ export const UserRequest: MessageFns<UserRequest> = {
     return message;
   },
 
-  fromJSON(object: any): UserRequest {
-    return { id: isSet(object.id) ? globalThis.Number(object.id) : 0 };
+  fromJSON(object: any): Users {
+    return { users: globalThis.Array.isArray(object?.users) ? object.users.map((e: any) => User.fromJSON(e)) : [] };
   },
 
-  toJSON(message: UserRequest): unknown {
+  toJSON(message: Users): unknown {
     const obj: any = {};
-    if (message.id !== 0) {
-      obj.id = Math.round(message.id);
+    if (message.users?.length) {
+      obj.users = message.users.map((e) => User.toJSON(e));
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<UserRequest>, I>>(base?: I): UserRequest {
-    return UserRequest.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<Users>, I>>(base?: I): Users {
+    return Users.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UserRequest>, I>>(object: I): UserRequest {
-    const message = createBaseUserRequest();
-    message.id = object.id ?? 0;
+  fromPartial<I extends Exact<DeepPartial<Users>, I>>(object: I): Users {
+    const message = createBaseUsers();
+    message.users = object.users?.map((e) => User.fromPartial(e)) || [];
     return message;
   },
 };
-
-/** Define a service */
-export interface UserService {
-  GetUserById(request: UserRequest): Promise<User>;
-}
-
-export const UserServiceServiceName = "proto.UserService";
-export class UserServiceClientImpl implements UserService {
-  private readonly rpc: Rpc;
-  private readonly service: string;
-  constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || UserServiceServiceName;
-    this.rpc = rpc;
-    this.GetUserById = this.GetUserById.bind(this);
-  }
-  GetUserById(request: UserRequest): Promise<User> {
-    const data = UserRequest.encode(request).finish();
-    const promise = this.rpc.request(this.service, "GetUserById", data);
-    return promise.then((data) => User.decode(new BinaryReader(data)));
-  }
-}
-
-interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
-}
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
