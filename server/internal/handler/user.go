@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"server/internal/buf"
 
@@ -28,26 +29,32 @@ func (h *Handler) PostUser(w http.ResponseWriter, r *http.Request) {
 
 	bodyBytes, err := h.b.BytesFromBody(r.Body)
 	if err != nil {
-		h.b.Error(w, "Failed to read body", http.StatusBadRequest)
+		h.b.Error(w, http.StatusBadRequest, "Failed to read body")
 		return
 	}
 
 	var user buf.User
 	if err := proto.Unmarshal(bodyBytes, &user); err != nil {
-		h.b.Error(w, "Failed to decode body", http.StatusBadRequest)
+		h.b.Error(w, http.StatusBadRequest, "Failed to decode body")
 		return
 	}
 
-	for _, u := range users {
-		if u.Id == user.Id {
-			h.b.Error(w, "User already exists", http.StatusBadRequest)
-			return
-		}
+	if err := createUser(&user); err != nil {
+		h.b.Error(w, http.StatusBadRequest, err.Error())
+		return
 	}
-
-	users = append(users, &user)
 
 	h.b.ProtoRespond(w, http.StatusCreated, &buf.Users{
 		Users: users,
 	})
+}
+
+func createUser(user *buf.User) error {
+	for _, u := range users {
+		if u.Id == user.Id {
+			return fmt.Errorf("user with id %d already exists", user.Id)
+		}
+	}
+	users = append(users, user)
+	return nil
 }
