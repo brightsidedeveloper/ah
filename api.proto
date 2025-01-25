@@ -4,6 +4,10 @@ package buf;
 
 option go_package = "/buf";
 
+message Error {
+  string message = 1;
+}
+
 message User {
   int32 id = 1;
   string name = 2;

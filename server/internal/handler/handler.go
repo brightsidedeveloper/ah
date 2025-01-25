@@ -1,19 +1,22 @@
 package handler
 
 import (
-	"io"
 	"log"
 	"net/http"
+	"server/internal/bin"
 	"server/internal/buf"
 
 	"google.golang.org/protobuf/proto"
 )
 
 type Handler struct {
+	b *bin.Binary
 }
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(b *bin.Binary) *Handler {
+	return &Handler{
+		b: b,
+	}
 }
 
 var users = []*buf.User{
@@ -28,32 +31,25 @@ var users = []*buf.User{
 }
 
 func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-protobuf")
-
 	data, err := proto.Marshal(&buf.Users{
 		Users: users,
 	})
-
 	if err != nil {
-		http.Error(w, "Failed to encode users", http.StatusInternalServerError)
+		h.b.Error(w, "Failed to encode users", http.StatusInternalServerError)
 		return
 	}
 
-	_, err = w.Write(data)
-	if err != nil {
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
-	}
+	h.b.Respond(w, data, http.StatusOK)
 }
 
 func (h *Handler) PostUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-protobuf")
 
-	bodyBytes, err := io.ReadAll(r.Body)
+	bodyBytes, err := h.b.BytesFromBody(r.Body)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-		log.Println("Error reading body:", err)
+		h.b.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
+
 	var user buf.User
 	if err := proto.Unmarshal(bodyBytes, &user); err != nil {
 		http.Error(w, "Failed to decode user", http.StatusInternalServerError)

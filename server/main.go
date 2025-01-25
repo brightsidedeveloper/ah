@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"server/internal/bin"
 	"server/internal/handler"
 	"server/internal/routes"
 	"syscall"
@@ -18,7 +19,9 @@ import (
 
 func main() {
 
-	h := handler.NewHandler()
+	b := bin.NewBinary()
+
+	h := handler.NewHandler(b)
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
