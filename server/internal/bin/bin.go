@@ -16,13 +16,13 @@ func NewBinary() *Bin {
 
 }
 
-func (r *Bin) Respond(w http.ResponseWriter, status int, binary []byte) {
+func (b *Bin) Write(w http.ResponseWriter, status int, binary []byte) {
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	w.WriteHeader(status)
 	w.Write(binary)
 }
 
-func (r *Bin) Error(w http.ResponseWriter, status int, message string) {
+func (b *Bin) WriteError(w http.ResponseWriter, status int, message string) {
 	data, err := proto.Marshal(&buf.Error{
 		Message: message,
 	})
@@ -30,19 +30,27 @@ func (r *Bin) Error(w http.ResponseWriter, status int, message string) {
 		w.Write([]byte("Failed to encode error message"))
 		return
 	}
-	r.Respond(w, status, data)
+	b.Write(w, status, data)
 }
 
-func (r *Bin) BytesFromBody(body io.ReadCloser) ([]byte, error) {
+func (b *Bin) bytesFromBody(body io.ReadCloser) ([]byte, error) {
 	defer body.Close()
 	return io.ReadAll(body)
 }
 
-func (r *Bin) ProtoRespond(w http.ResponseWriter, status int, protoMessage proto.Message) {
+func (b *Bin) UnmarshalBody(body io.ReadCloser, protoMessage proto.Message) error {
+	data, err := b.bytesFromBody(body)
+	if err != nil {
+		return err
+	}
+	return proto.Unmarshal(data, protoMessage)
+}
+
+func (b *Bin) ProtoWrite(w http.ResponseWriter, status int, protoMessage proto.Message) {
 	data, err := proto.Marshal(protoMessage)
 	if err != nil {
-		r.Error(w, http.StatusInternalServerError, "Failed to encode message")
+		b.WriteError(w, http.StatusInternalServerError, "Failed to encode message")
 		return
 	}
-	r.Respond(w, status, data)
+	b.Write(w, status, data)
 }
