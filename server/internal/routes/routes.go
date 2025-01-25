@@ -9,4 +9,5 @@ import (
 func MountRoutes(r chi.Router, h *handler.Handler) {
 	r.Get("/users", h.GetUsers)
 	r.Post("/user", h.PostUser)
+	r.Get("/test", h.Test)
 }
