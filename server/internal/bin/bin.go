@@ -8,21 +8,30 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Binary struct {
+type Bin struct {
 }
 
-func NewBinary() *Binary {
-	return &Binary{}
+func NewBinary() *Bin {
+	return &Bin{}
 
 }
 
-func (r *Binary) Respond(w http.ResponseWriter, binary []byte, status int) {
+func (r *Bin) Respond(w http.ResponseWriter, binary []byte, status int) {
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	w.WriteHeader(status)
 	w.Write(binary)
 }
 
-func (r *Binary) Error(w http.ResponseWriter, message string, status int) {
+func (r *Bin) ProtoRespond(w http.ResponseWriter, status int, protoMessage proto.Message) {
+	data, err := proto.Marshal(protoMessage)
+	if err != nil {
+		r.Error(w, "Failed to encode message", http.StatusInternalServerError)
+		return
+	}
+	r.Respond(w, data, status)
+}
+
+func (r *Bin) Error(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	w.WriteHeader(status)
 	data, err := proto.Marshal(&buf.Error{
@@ -35,7 +44,7 @@ func (r *Binary) Error(w http.ResponseWriter, message string, status int) {
 	w.Write(data)
 }
 
-func (r *Binary) BytesFromBody(body io.ReadCloser) ([]byte, error) {
+func (r *Bin) BytesFromBody(body io.ReadCloser) ([]byte, error) {
 	defer body.Close()
 	return io.ReadAll(body)
 }
