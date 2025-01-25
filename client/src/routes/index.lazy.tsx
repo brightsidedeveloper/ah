@@ -19,11 +19,10 @@ function RouteComponent() {
           post(
             '/api/user',
             User.create({
-              name: 'test',
-              id: 3,
+              name: 'test2',
             }),
             (u) => User.encode(u).finish(),
-            (b) => Users.decode(b)
+            (b) => User.decode(b)
           )
         }}
       >

@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"server/internal/bin"
 	"server/internal/handler"
+	"server/internal/query"
 	"server/internal/routes"
 	"syscall"
 	"time"
@@ -15,13 +16,22 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/jackc/pgx/v5"
 )
 
 func main() {
+	ctx := context.Background()
+
+	conn, err := pgx.Connect(ctx, "host=localhost port=5432 user=admin password=password dbname=mydb sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	q := query.New(conn)
 
 	b := bin.NewBinary()
 
-	h := handler.NewHandler(b)
+	h := handler.NewHandler(b, q)
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{

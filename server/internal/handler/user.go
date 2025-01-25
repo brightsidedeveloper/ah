@@ -1,23 +1,29 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"server/internal/buf"
 )
 
-var users = []*buf.User{
-	{
-		Id:   1,
-		Name: "Alice",
-	},
-	{
-		Id:   2,
-		Name: "Bob",
-	},
-}
-
 func (h *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
+
+	qUsers, err := h.query.ListUsers(context.Background())
+	if err != nil {
+		fmt.Println(err)
+		h.bin.WriteError(w, http.StatusInternalServerError, "Failed to get users")
+		return
+	}
+
+	users := make([]*buf.User, 0, len(qUsers))
+	for _, u := range qUsers {
+		users = append(users, &buf.User{
+			Id:   u.ID,
+			Name: u.Name,
+		})
+	}
+
 	h.bin.ProtoWrite(w, http.StatusOK, &buf.Users{
 		Users: users,
 	})
@@ -30,22 +36,19 @@ func (h *Handler) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := createUser(&user); err != nil {
-		h.bin.WriteError(w, http.StatusBadRequest, err.Error())
+	if user.Name == "" {
+		h.bin.WriteError(w, http.StatusBadRequest, "Name is required")
 		return
 	}
 
-	h.bin.ProtoWrite(w, http.StatusCreated, &buf.Users{
-		Users: users,
-	})
-}
-
-func createUser(user *buf.User) error {
-	for _, u := range users {
-		if u.Id == user.Id {
-			return fmt.Errorf("user with id %d already exists", user.Id)
-		}
+	qUser, err := h.query.CreateUser(r.Context(), user.Name)
+	if err != nil {
+		h.bin.WriteError(w, http.StatusInternalServerError, "Failed to create user")
+		return
 	}
-	users = append(users, user)
-	return nil
+
+	h.bin.ProtoWrite(w, http.StatusCreated, &buf.User{
+		Id:   qUser.ID,
+		Name: qUser.Name,
+	})
 }
