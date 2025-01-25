@@ -13,7 +13,12 @@ client:
 
 proto: server client
 
+conn:
+	psql -h localhost -p 5432 -U admin -d mydb
+
 up:
 	docker compose up -d
 down:
 	docker compose down
+clean:
+	docker compose down --volumes --remove-orphans
