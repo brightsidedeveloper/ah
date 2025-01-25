@@ -34,6 +34,61 @@ export default async function request<T>(url: string, options: RequestInit = {},
   }
 }
 
+export function get<T>(
+  url: string,
+  params: Record<string, string> = {},
+  decodeFn: (binary: Uint8Array) => T,
+  options: RequestInit = {}
+): Promise<T> {
+  const queryString = params ? new URLSearchParams(params).toString() : ''
+  const fullUrl = queryString ? `${url}?${queryString}` : url
+  return request<T>(fullUrl, { ...options, method: 'GET' }, decodeFn)
+}
+
+export function post<T, K>(
+  url: string,
+  body: K,
+  encodeFn: (body: K) => Uint8Array,
+  decodeFn?: (binary: Uint8Array) => T,
+  options: RequestInit = {}
+): Promise<T> {
+  const encodedBody = encodeFn(body)
+  return request<T>(url, { ...options, method: 'POST', body: encodedBody }, decodeFn)
+}
+
+export function put<T, K>(
+  url: string,
+  body: K,
+  encodeFn: (body: K) => Uint8Array,
+  decodeFn?: (binary: Uint8Array) => T,
+  options: RequestInit = {}
+): Promise<T> {
+  const encodedBody = encodeFn(body)
+  return request<T>(url, { ...options, method: 'PUT', body: encodedBody }, decodeFn)
+}
+
+export function del<T, K>(
+  url: string,
+  body: K,
+  encodeFn: (body: K) => Uint8Array,
+  decodeFn?: (binary: Uint8Array) => T,
+  options: RequestInit = {}
+): Promise<T> {
+  const encodedBody = encodeFn(body)
+  return request<T>(url, { ...options, method: 'DELETE', body: encodedBody }, decodeFn)
+}
+
+export function patch<T, K>(
+  url: string,
+  body: K,
+  encodeFn: (body: K) => Uint8Array,
+  decodeFn?: (binary: Uint8Array) => T,
+  options: RequestInit = {}
+): Promise<T> {
+  const encodedBody = encodeFn(body)
+  return request<T>(url, { ...options, method: 'PATCH', body: encodedBody }, decodeFn)
+}
+
 export function ensureError(error: unknown): Error {
   if (error instanceof Error) {
     return error

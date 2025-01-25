@@ -1,7 +1,7 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { User, Users } from '../api/api'
-import request from '../api/request'
+import { get, post } from '../api/request'
 
 export const Route = createLazyFileRoute('/')({
   component: RouteComponent,
@@ -9,24 +9,20 @@ export const Route = createLazyFileRoute('/')({
 
 function RouteComponent() {
   useEffect(() => {
-    request('http://localhost:8081/users', undefined, (b) => Users.decode(b))
+    get('/api/users', undefined, (b) => Users.decode(b))
   }, [])
 
   return (
     <div>
       <button
         onClick={async () => {
-          const u = User.create({
-            name: 'test',
-            id: 3,
-          })
-          const body = User.encode(u).finish()
-          request(
-            'http://localhost:8081/user',
-            {
-              method: 'POST',
-              body,
-            },
+          post(
+            '/api/user',
+            User.create({
+              name: 'test',
+              id: 3,
+            }),
+            (u) => User.encode(u).finish(),
             (b) => Users.decode(b)
           )
         }}

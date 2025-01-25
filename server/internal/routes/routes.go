@@ -7,7 +7,11 @@ import (
 )
 
 func MountRoutes(r chi.Router, h *handler.Handler) {
-	r.Get("/users", h.GetUsers)
-	r.Post("/user", h.PostUser)
-	r.Get("/test", h.Test)
+
+	api := chi.NewRouter()
+	api.Get("/users", h.GetUsers)
+	api.Post("/user", h.PostUser)
+	api.Get("/test", h.Test)
+
+	r.Mount("/api", api)
 }
