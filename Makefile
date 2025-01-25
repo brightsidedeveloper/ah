@@ -11,4 +11,9 @@ client:
 		api.proto
 
 
-all: server client
+proto: server client
+
+up:
+	docker compose up -d
+down:
+	docker compose down
