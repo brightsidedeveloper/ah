@@ -4,8 +4,13 @@ import { HelloWave } from '@/components/HelloWave'
 import ParallaxScrollView from '@/components/ParallaxScrollView'
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
+import { useEffect } from 'react'
 
 export default function HomeScreen() {
+  useEffect(() => {
+    const socket = new WebSocket('wss://localhost:')
+  }, [])
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -18,10 +23,8 @@ export default function HomeScreen() {
       <ThemedView style={styles.stepContainer}></ThemedView>
 
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">What's up Charlie?!</ThemedText>
-        <ThemedText>
-          The start of something <ThemedText type="defaultSemiBold">GREAT</ThemedText>
-        </ThemedText>
+        <ThemedText type="subtitle">What's up Josiah?!</ThemedText>
+        <ThemedText>Anthing I want</ThemedText>
       </ThemedView>
     </ParallaxScrollView>
   )
