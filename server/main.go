@@ -10,7 +10,6 @@ import (
 	"server/internal/handler"
 	"server/internal/query"
 	"server/internal/routes"
-	"server/internal/socket"
 	"syscall"
 	"time"
 
@@ -32,9 +31,7 @@ func main() {
 
 	b := bin.NewBinary()
 
-	s := socket.NewServer()
-
-	h := handler.NewHandler(b, q, s)
+	h := handler.NewHandler(b, q)
 
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
