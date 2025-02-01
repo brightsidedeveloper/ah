@@ -21,7 +21,7 @@ type Client struct {
 func NewClient(conn *websocket.Conn) *Client {
 	return &Client{
 		conn: conn,
-		id:   conn.RemoteAddr().String(),
+		id:   uuid.New().String(),
 	}
 }
 
